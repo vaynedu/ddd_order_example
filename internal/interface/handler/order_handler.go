@@ -24,10 +24,10 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var request struct {
 		CustomerID string `json:"customer_id"`
 		Items      []struct {
-			ProductID string  `json:"product_id"`
-			Quantity  int     `json:"quantity"`
-			UnitPrice int `json:"unit_price"`
-			Subtotal  int `json:"subtotal"`
+			ProductID string `json:"product_id"`
+			Quantity  int    `json:"quantity"`
+			UnitPrice int    `json:"unit_price"`
+			Subtotal  int    `json:"subtotal"`
 		} `json:"items"`
 	}
 
@@ -39,7 +39,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	// 2. 转换为领域模型
 	var items []order.OrderItemDO
 	for _, item := range request.Items {
-		items = append(items, order.OrderItemDO{	
+		items = append(items, order.OrderItemDO{
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 			UnitPrice: item.UnitPrice,
@@ -64,15 +64,18 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 // GetOrder 获取订单的HTTP处理函数
 func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
-	// 1. 从URL中获取订单ID
-	orderID := r.URL.Path[len("/api/orders/"):]
-	if orderID == "" {
-		http.Error(w, "订单ID不能为空", http.StatusBadRequest)
+	// 1. 从body中获取订单id
+	var request struct {
+		OrderID string `json:"order_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "无效的请求格式: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// 2. 调用应用服务
-	order, err := h.orderService.GetOrder(r.Context(), orderID)
+	order, err := h.orderService.GetOrder(r.Context(), request.OrderID)
 	if err != nil {
 		if err.Error() == "订单不存在" {
 			http.Error(w, "订单不存在", http.StatusNotFound)

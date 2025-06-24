@@ -75,7 +75,7 @@ func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.
 	// 查询订单项
 	query := `
         SELECT product_id, quantity, unit_price, subtotal
-        FROM order_items
+        FROM t_order_items
         WHERE order_id = ?
     `
 
