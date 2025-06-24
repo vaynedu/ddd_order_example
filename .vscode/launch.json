@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch main.go",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            // "program": "${workspaceFolder}/example/main.go",
+            "program": "C:/Users/lingze/.go/src/ddd_order_example/main.go",
+            "env": {
+                "GOPATH":"C:/Users/lingze/.go",
+                "GOROOT":"D:/go/sdk/go1.23.4"
+            },
+            "args": []
+        }
+    ]
+}

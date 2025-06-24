@@ -63,3 +63,36 @@
 5. 领域事件模式(未来可扩展)
 
 通过这种设计，系统具有良好的可维护性和可扩展性，业务逻辑与技术实现清晰分离。  
+
+
+
+
+order_ddd_example/
+├── cmd/
+│   └── server/
+│       └── main.go              # 应用入口点
+├── internal/
+│   ├── domain/
+│   │   └── order/
+│   │       ├── entity.go        # 订单实体
+│   │       ├── repository.go    # 仓储接口
+│   │       └── service.go       # 领域服务
+│   ├── application/
+│   │   └── service/
+│   │       └── order_service.go # 应用服务
+│   ├── infrastructure/
+│   │   ├── repository/
+│   │   │   └── order_repository.go # 仓储实现
+│   │   └── persistence/
+│   │       └── schema.sql       # 数据库模式
+│   └── interface/
+│       └── handler/
+│           └── order_handler.go # HTTP处理器
+├── pkg/
+│   └── database/
+│       └── mysql.go             # MySQL连接
+├── config/
+│   └── config.yaml              # 配置文件
+├── .env.example                 # 环境变量示例
+├── go.mod                       # Go模块文件
+└── README.md                    # 项目说明

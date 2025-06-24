@@ -2,113 +2,85 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/vaynedu/ddd_order_example/internal/domain/order"
+	"gorm.io/gorm"
 )
 
 // OrderRepositoryMySQL MySQL实现的订单仓储
 type OrderRepositoryMySQL struct {
-	db *sqlx.DB
+	db *gorm.DB
 }
 
 // NewOrderRepository 创建订单仓储实例
-func NewOrderRepository(db *sqlx.DB) order.OrderRepository {
+func NewOrderRepository(db *gorm.DB) order.OrderRepository {
 	return &OrderRepositoryMySQL{db: db}
 }
 
 // Save 保存订单
-func (r *OrderRepositoryMySQL) Save(ctx context.Context, order *order.Order) error {
+func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error {
 	// 开始事务
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
+	tx := r.db.Begin()
+	tx = tx.WithContext(ctx)
+	if err := tx.Error; err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	// 插入或更新订单主表
-	query := `
-        INSERT INTO orders (id, customer_id, status, total_amount, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-        status = VALUES(status),
-        total_amount = VALUES(total_amount),
-        updated_at = VALUES(updated_at)
-    `
-
-	_, err = tx.ExecContext(ctx, query,
-		order.ID,
-		order.CustomerID,
-		order.Status,
-		order.TotalAmount,
-		order.CreatedAt,
-		order.UpdatedAt,
-	)
-
-	if err != nil {
+	// 使用GORM保存订单主表
+	if err := tx.Table(order.OrderDO{}.TableName()).Create(o).Error; err != nil {
 		return err
 	}
 
-	// 先删除原有订单项
-	_, err = tx.ExecContext(ctx, "DELETE FROM order_items WHERE order_id = ?", order.ID)
-	if err != nil {
+	// 删除原有订单项
+	if err := tx.Table(order.OrderItemDO{}.TableName()).Where("order_id = ?", o.ID).Delete(&order.OrderItemDO{}).Error; err != nil {
 		return err
 	}
 
-	// 插入新的订单项
-	for _, item := range order.Items {
-		query := `
-            INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
-            VALUES (?, ?, ?, ?, ?)
-        `
-
-		_, err = tx.ExecContext(ctx, query,
-			order.ID,
-			item.ProductID,
-			item.Quantity,
-			item.UnitPrice,
-			item.Subtotal,
-		)
-
-		if err != nil {
-			return err
+	// 批量插入新订单项
+	orderItems := make([]order.OrderItemDO, len(o.Items))
+	for i, item := range o.Items {
+		orderItems[i] = order.OrderItemDO{
+			OrderID:   o.ID,
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			UnitPrice: item.UnitPrice,
+			Subtotal:  item.Subtotal,
 		}
+	}
+	if err := tx.Table(order.OrderItemDO{}.TableName()).Create(&orderItems).Error; err != nil {
+		return err
 	}
 
 	// 提交事务
-	return tx.Commit()
+	err := tx.Commit().Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // FindByID 根据ID查找订单
-func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.Order, error) {
+func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.OrderDO, error) {
 	// 查询订单主表
-	query := `
-        SELECT id, customer_id, status, total_amount, created_at, updated_at
-        FROM orders
-        WHERE id = ?
-    `
-
-	var o order.Order
-	err := r.db.GetContext(ctx, &o, query, id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	var o order.OrderDO
+	if err := r.db.WithContext(ctx).Table(order.OrderDO{}.TableName()).First(&o, "id = ?", id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("订单不存在")
 		}
 		return nil, err
 	}
 
 	// 查询订单项
-	query = `
+	query := `
         SELECT product_id, quantity, unit_price, subtotal
         FROM order_items
         WHERE order_id = ?
     `
 
-	var items []order.OrderItem
-	err = r.db.SelectContext(ctx, &items, query, id)
-	if err != nil {
+	var items []order.OrderItemDO
+	if err := r.db.WithContext(ctx).Table(order.OrderItemDO{}.TableName()).Raw(query, id).Scan(&items).Error; err != nil {
 		return nil, err
 	}
 

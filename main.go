@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/vaynedu/ddd_order_example/internal/handler"
-	"github.com/vaynedu/ddd_order_example/internal/repository"
-	"github.com/vaynedu/ddd_order_example/internal/service"
+	"github.com/vaynedu/ddd_order_example/internal/application/service"
+	"github.com/vaynedu/ddd_order_example/internal/infrastructure/repository"
+	"github.com/vaynedu/ddd_order_example/internal/interface/handler"
 	"github.com/vaynedu/ddd_order_example/pkg/database"
 )
 
 func initConfig() error {
-	viper.SetConfigName("config")
+	viper.SetConfigName("config_prod")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("config")
 	viper.AutomaticEnv()
@@ -28,7 +28,7 @@ func initConfig() error {
 
 func main() {
 	// 解析命令行参数
-	flag.String("config", "config/config.yaml", "配置文件路径")
+	flag.String("config", "config/config_prod.yaml", "配置文件路径")
 	flag.Parse()
 
 	// 初始化配置
@@ -49,11 +49,10 @@ func main() {
 	)
 
 	// 初始化数据库连接
-	db, err := database.NewMySQLDB(ctx, dsn)
+	db, err := database.InitMySQL(ctx, dsn)
 	if err != nil {
 		log.Fatalf("连接数据库失败: %v", err)
 	}
-	defer db.Close()
 
 	// 初始化仓储
 	orderRepo := repository.NewOrderRepository(db)
@@ -66,8 +65,8 @@ func main() {
 
 	// 注册路由
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/orders", orderHandler.CreateOrder)
-	mux.HandleFunc("/api/orders/", orderHandler.GetOrder)
+	mux.HandleFunc("/api/orders/create", orderHandler.CreateOrder)
+	mux.HandleFunc("/api/orders/list", orderHandler.GetOrder)
 
 	// 创建HTTP服务器
 	server := &http.Server{

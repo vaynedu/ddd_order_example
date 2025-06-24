@@ -17,7 +17,7 @@ func NewOrderDomainService(repo OrderRepository) *OrderDomainService {
 }
 
 // CreateOrder 创建订单
-func (s *OrderDomainService) CreateOrder(ctx context.Context, order *Order) error {
+func (s *OrderDomainService) CreateOrder(ctx context.Context, order *OrderDO) error {
     // 应用业务规则
     if err := order.Validate(); err != nil {
         return err
@@ -47,4 +47,14 @@ func (s *OrderDomainService) PayOrder(ctx context.Context, orderID string) error
     order.UpdatedAt = time.Now()
     
     return s.orderRepo.Save(ctx, order)
-}  
+}
+
+// GetOrderByID 获取订单
+func (s *OrderDomainService) GetOrderByID(ctx context.Context, orderID string) (*OrderDO, error) {
+    return s.orderRepo.FindByID(ctx, orderID)
+}
+
+// UpdateOrder 更新订单
+func (s *OrderDomainService) UpdateOrder(ctx context.Context, order *OrderDO) error {
+    return s.orderRepo.Save(ctx, order)
+}

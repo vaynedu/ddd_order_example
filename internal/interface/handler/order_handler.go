@@ -37,9 +37,9 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. 转换为领域模型
-	var items []order.OrderItem
+	var items []order.OrderItemDO
 	for _, item := range request.Items {
-		items = append(items, order.OrderItem{
+		items = append(items, order.OrderItemDO{	
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 			UnitPrice: item.UnitPrice,

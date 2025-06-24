@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/vaynedu/ddd_order_example/internal/domain/order"
@@ -20,19 +22,33 @@ func NewOrderService(repo order.OrderRepository) *OrderService {
 }
 
 // CreateOrder 创建订单
-func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []order.OrderItem) (string, error) {
-	// 计算总金额
+func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []order.OrderItemDO) (string, error) {
+	// 计算总金额并验证订单项
 	var totalAmount float64
 	for _, item := range items {
+		if item.ProductID == "" {
+			return "", errors.New("product ID cannot be empty")
+		}
+		if item.Quantity <= 0 {
+			return "", errors.New("quantity must be greater than zero")
+		}
+		if item.UnitPrice <= 0 {
+			return "", errors.New("unit price must be greater than zero")
+		}
+		calculatedSubtotal := float64(item.Quantity) * item.UnitPrice
+		if item.Subtotal != calculatedSubtotal {
+			return "", fmt.Errorf("subtotal mismatch for product %s: expected %.2f, got %.2f", item.ProductID, calculatedSubtotal, item.Subtotal)
+		}
 		totalAmount += item.Subtotal
 	}
 
 	// 创建订单聚合
-	newOrder := &order.Order{
+	newOrder := &order.OrderDO{
 		ID:          uuid.New().String(),
 		CustomerID:  customerID,
 		Items:       items,
 		TotalAmount: totalAmount,
+		Status:      order.OrderStatusCreated,
 	}
 
 	// 委托给领域服务处理业务逻辑
@@ -40,13 +56,13 @@ func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items
 }
 
 // GetOrder 获取订单
-func (s *OrderService) GetOrder(ctx context.Context, orderID string) (*order.Order, error) {
-	return s.orderDomainService.orderRepo.FindByID(ctx, orderID)
+func (s *OrderService) GetOrder(ctx context.Context, orderID string) (*order.OrderDO, error) {
+	return s.orderDomainService.GetOrderByID(ctx, orderID)
 }
 
 // CancelOrder 取消订单
 func (s *OrderService) CancelOrder(ctx context.Context, orderID string) error {
-	order, err := s.orderDomainService.orderRepo.FindByID(ctx, orderID)
+	order, err := s.orderDomainService.GetOrderByID(ctx, orderID)
 	if err != nil {
 		return err
 	}
@@ -57,5 +73,5 @@ func (s *OrderService) CancelOrder(ctx context.Context, orderID string) error {
 	}
 
 	// 持久化更新
-	return s.orderDomainService.orderRepo.Save(ctx, order)
+	return s.orderDomainService.UpdateOrder(ctx, order)
 }
