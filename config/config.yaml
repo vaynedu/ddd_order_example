@@ -1,0 +1,17 @@
+# 服务器配置
+server:
+  address: ":8080"
+
+# 数据库配置
+database:
+  username: "root"
+  password: "password"
+  host: "localhost"
+  port: 3306
+  name: "orders"
+  timeout: 5
+
+# 日志配置
+logging:
+  level: "info"
+  format: "text"  
