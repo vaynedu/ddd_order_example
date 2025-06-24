@@ -24,7 +24,7 @@ func NewOrderService(repo order.OrderRepository) *OrderService {
 // CreateOrder 创建订单
 func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []order.OrderItemDO) (string, error) {
 	// 计算总金额并验证订单项
-	var totalAmount float64
+	var totalAmount int
 	for _, item := range items {
 		if item.ProductID == "" {
 			return "", errors.New("product ID cannot be empty")
@@ -35,7 +35,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items
 		if item.UnitPrice <= 0 {
 			return "", errors.New("unit price must be greater than zero")
 		}
-		calculatedSubtotal := float64(item.Quantity) * item.UnitPrice
+		calculatedSubtotal := item.Quantity * item.UnitPrice
 		if item.Subtotal != calculatedSubtotal {
 			return "", fmt.Errorf("subtotal mismatch for product %s: expected %.2f, got %.2f", item.ProductID, calculatedSubtotal, item.Subtotal)
 		}

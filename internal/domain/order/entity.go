@@ -10,16 +10,17 @@ import (
 
 // TableName 指定模型对应的数据库表名
 func (OrderDO) TableName() string {
-    return "orders"
+	return "t_order"
 }
+
 type OrderDO struct {
-	ID          string        `json:"id"`
-	CustomerID  string        `json:"customer_id"`
+	ID          string        `json:"id" gorm:"column:id"`
+	CustomerID  string        `json:"customer_id" gorm:"column:customer_id"`
 	Items       []OrderItemDO `json:"items" gorm:"foreignKey:OrderID"`
-	Status      OrderStatus   `json:"status"`
-	TotalAmount float64       `json:"total_amount"`
-	CreatedAt   time.Time     `json:"created_at"`
-	UpdatedAt   time.Time     `json:"updated_at"`
+	Status      OrderStatus   `json:"status" gorm:"column:status"`
+	TotalAmount int           `json:"total_amount" gorm:"column:total_amount"`
+	CreatedAt   time.Time     `json:"created_at" gorm:"column:created_at"`
+	UpdatedAt   time.Time     `json:"updated_at" gorm:"column:updated_at"`
 }
 
 // OrderItemDOs 订单项集合
@@ -30,14 +31,15 @@ type OrderItemDOs []OrderItemDO
 
 // TableName 指定模型对应的数据库表名
 func (OrderItemDO) TableName() string {
-    return "order_items"
+	return "t_order_items"
 }
+
 type OrderItemDO struct {
-	OrderID   string  `json:"order_id" gorm:"column:order_id"`
-	ProductID string  `json:"product_id" gorm:"column:product_id"`
-	Quantity  int     `json:"quantity" gorm:"column:quantity"`
-	UnitPrice float64 `json:"unit_price" gorm:"column:unit_price"`
-	Subtotal  float64 `json:"subtotal" gorm:"column:subtotal"`
+	OrderID   string `json:"order_id" gorm:"column:order_id"`
+	ProductID string `json:"product_id" gorm:"column:product_id"`
+	Quantity  int    `json:"quantity" gorm:"column:quantity"`
+	UnitPrice int    `json:"unit_price" gorm:"column:unit_price"`
+	Subtotal  int    `json:"subtotal" gorm:"column:subtotal"`
 }
 
 // OrderStatus 订单状态
@@ -61,7 +63,7 @@ func (o *OrderDO) Validate() error {
 		return errors.New("订单商品不能为空")
 	}
 
-	var calculatedTotal float64
+	var calculatedTotal int
 	for _, item := range o.Items {
 		if item.ProductID == "" {
 			return errors.New("商品ID不能为空")
@@ -78,7 +80,7 @@ func (o *OrderDO) Validate() error {
 		calculatedTotal += item.Subtotal
 	}
 
-	if o.TotalAmount != calculatedTotal {
+	if o.TotalAmount != calculatedTotal{
 		return errors.New("订单总金额与商品小计之和不匹配")
 	}
 

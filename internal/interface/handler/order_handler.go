@@ -26,8 +26,8 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		Items      []struct {
 			ProductID string  `json:"product_id"`
 			Quantity  int     `json:"quantity"`
-			UnitPrice float64 `json:"unit_price"`
-			Subtotal  float64 `json:"subtotal"`
+			UnitPrice int `json:"unit_price"`
+			Subtotal  int `json:"subtotal"`
 		} `json:"items"`
 	}
 

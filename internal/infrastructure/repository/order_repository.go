@@ -29,12 +29,12 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error
 	defer tx.Rollback()
 
 	// 使用GORM保存订单主表
-	if err := tx.Table(order.OrderDO{}.TableName()).Create(o).Error; err != nil {
+	if err := tx.Table("t_order").Create(o).Error; err != nil {
 		return err
 	}
 
 	// 删除原有订单项
-	if err := tx.Table(order.OrderItemDO{}.TableName()).Where("order_id = ?", o.ID).Delete(&order.OrderItemDO{}).Error; err != nil {
+	if err := tx.Table("t_order_items").Where("order_id = ?", o.ID).Delete(&order.OrderItemDO{}).Error; err != nil {
 		return err
 	}
 
@@ -49,7 +49,7 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error
 			Subtotal:  item.Subtotal,
 		}
 	}
-	if err := tx.Table(order.OrderItemDO{}.TableName()).Create(&orderItems).Error; err != nil {
+	if err := tx.Table("t_order_items").Create(&orderItems).Error; err != nil {
 		return err
 	}
 
@@ -65,7 +65,7 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error
 func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.OrderDO, error) {
 	// 查询订单主表
 	var o order.OrderDO
-	if err := r.db.WithContext(ctx).Table(order.OrderDO{}.TableName()).First(&o, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).Table("t_order").First(&o, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("订单不存在")
 		}
