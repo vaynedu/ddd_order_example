@@ -17,11 +17,11 @@
 
 ## 技术栈
 
-- 语言：Go 1.19+
+- 语言：Go 1.23
 - 数据库：MySQL
 - Web框架：标准库net/http
 - 配置管理：viper
-- ORM：sqlx
+- ORM：gorm
 
 ## 运行步骤
 
@@ -34,7 +34,8 @@
 ## API接口
 
 ### 创建订单POST /api/orders
-请求体示例：{
+```json
+{
     "customer_id": "123456",
     "items": [
         {
@@ -51,7 +52,14 @@
         }
     ]
 }
-### 获取订单GET /api/orders/{order_id}
+```
+### 获取订单POST /api/orders/list
+```json
+{
+    "order_id": "9b958247-5511-4d78-ac98-a9ecee7538b3"
+}
+
+```
 ## 设计思想
 
 本项目遵循DDD的核心原则：
@@ -65,8 +73,7 @@
 通过这种设计，系统具有良好的可维护性和可扩展性，业务逻辑与技术实现清晰分离。  
 
 
-
-
+```
 order_ddd_example/
 ├── cmd/
 │   └── server/
@@ -96,3 +103,5 @@ order_ddd_example/
 ├── .env.example                 # 环境变量示例
 ├── go.mod                       # Go模块文件
 └── README.md                    # 项目说明
+
+```
