@@ -95,6 +95,11 @@ order_ddd_example/
 │   └── interface/
 │       └── handler/
 │           └── order_handler.go # HTTP处理器
+│       └── dto/
+│           └── order_dto.go     # 订单DTO
+│       └── di/
+│           └── wire.go        // 依赖定义文件
+│           └── wire_gen.go    // 自动生成的依赖文件
 ├── pkg/
 │   └── database/
 │       └── mysql.go             # MySQL连接

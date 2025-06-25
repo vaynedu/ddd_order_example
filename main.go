@@ -12,9 +12,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/vaynedu/ddd_order_example/internal/application/service"
-	"github.com/vaynedu/ddd_order_example/internal/infrastructure/repository"
-	"github.com/vaynedu/ddd_order_example/internal/interface/handler"
+	"github.com/vaynedu/ddd_order_example/internal/infrastructure/di"
 	"github.com/vaynedu/ddd_order_example/pkg/database"
 )
 
@@ -54,14 +52,11 @@ func main() {
 		log.Fatalf("连接数据库失败: %v", err)
 	}
 
-	// 初始化仓储
-	orderRepo := repository.NewOrderRepository(db)
-
-	// 初始化应用服务
-	orderService := service.NewOrderService(orderRepo)
-
-	// 初始化HTTP处理器
-	orderHandler := handler.NewOrderHandler(orderService)
+	// 通过Wire依赖注入初始化处理器
+	orderHandler, err := di.InitializeOrderHandler(db)
+	if err != nil {
+		log.Fatalf("依赖注入初始化失败: %v", err)
+	}
 
 	// 注册路由
 	mux := http.NewServeMux()

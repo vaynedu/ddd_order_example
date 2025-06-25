@@ -37,7 +37,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items
 		}
 		calculatedSubtotal := item.Quantity * item.UnitPrice
 		if item.Subtotal != calculatedSubtotal {
-return "", fmt.Errorf("subtotal mismatch for product %s: expected %d, got %d", item.ProductID, calculatedSubtotal, item.Subtotal)
+			return "", fmt.Errorf("subtotal mismatch for product %s: expected %d, got %d", item.ProductID, calculatedSubtotal, item.Subtotal)
 		}
 		totalAmount += item.Subtotal
 	}
