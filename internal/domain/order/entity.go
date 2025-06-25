@@ -18,7 +18,7 @@ type OrderDO struct {
 	CustomerID  string        `json:"customer_id" gorm:"column:customer_id"`
 	Items       []OrderItemDO `json:"items" gorm:"foreignKey:OrderID"`
 	Status      OrderStatus   `json:"status" gorm:"column:status"`
-	TotalAmount int           `json:"total_amount" gorm:"column:total_amount"`
+	TotalAmount int64           `json:"total_amount" gorm:"column:total_amount"`
 	CreatedAt   time.Time     `json:"created_at" gorm:"column:created_at"`
 	UpdatedAt   time.Time     `json:"updated_at" gorm:"column:updated_at"`
 }
@@ -37,9 +37,9 @@ func (OrderItemDO) TableName() string {
 type OrderItemDO struct {
 	OrderID   string `json:"order_id" gorm:"column:order_id"`
 	ProductID string `json:"product_id" gorm:"column:product_id"`
-	Quantity  int    `json:"quantity" gorm:"column:quantity"`
-	UnitPrice int    `json:"unit_price" gorm:"column:unit_price"`
-	Subtotal  int    `json:"subtotal" gorm:"column:subtotal"`
+	Quantity  int64    `json:"quantity" gorm:"column:quantity"`
+	UnitPrice int64    `json:"unit_price" gorm:"column:unit_price"`
+	Subtotal  int64    `json:"subtotal" gorm:"column:subtotal"`
 }
 
 // OrderStatus 订单状态
@@ -63,7 +63,7 @@ func (o *OrderDO) Validate() error {
 		return errors.New("订单商品不能为空")
 	}
 
-	var calculatedTotal int
+	var calculatedTotal int64
 	for _, item := range o.Items {
 		if item.ProductID == "" {
 			return errors.New("商品ID不能为空")

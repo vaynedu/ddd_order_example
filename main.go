@@ -52,10 +52,15 @@ func main() {
 		log.Fatalf("连接数据库失败: %v", err)
 	}
 
-	// 通过Wire依赖注入初始化处理器
-	orderHandler, err := di.InitializeOrderHandler(db)
+	// // 通过Wire依赖注入初始化处理器
+	// orderHandler, err := di.InitializeOrderHandler(db)
+	// if err != nil {
+	// 	log.Fatalf("依赖注入初始化失败: %v", err)
+	// }
+
+	orderHandler, err := di.InitializeTestOrderHandler(db)
 	if err != nil {
-		log.Fatalf("依赖注入初始化失败: %v", err)
+		log.Fatalf("mock依赖注入初始化失败: %v", err)
 	}
 
 	// 注册路由

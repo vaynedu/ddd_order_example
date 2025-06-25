@@ -17,4 +17,4 @@ run: build
 
 clean:
 	rm -f $(BINARY_NAME)
-	#rm -f $(WIRE_DIR)/wire_gen.go
+	rm -f $(WIRE_DIR)/wire_gen.go

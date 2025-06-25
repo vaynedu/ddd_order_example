@@ -12,8 +12,8 @@ type OrderDomainService struct {
 }
 
 // NewOrderDomainService 创建订单领域服务
-func NewOrderDomainService(repo OrderRepository) *OrderDomainService {
-    return &OrderDomainService{orderRepo: repo}
+func NewOrderDomainService(repo OrderRepository) OrderDomainService {
+    return OrderDomainService{orderRepo: repo}
 }
 
 // CreateOrder 创建订单

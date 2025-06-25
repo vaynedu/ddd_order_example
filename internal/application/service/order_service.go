@@ -3,55 +3,62 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/google/uuid"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_product_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/order"
 )
 
-// OrderService 订单应用服务
 type OrderService struct {
-	orderDomainService *order.OrderDomainService
+	productService     domain_product_core.ProductService // 依赖商品领域接口
+	orderDomainService order.OrderDomainService           // 依赖订单领域服务
 }
 
-// NewOrderService 创建订单应用服务
-func NewOrderService(repo order.OrderRepository) *OrderService {
+func NewOrderService(orderDomainService order.OrderDomainService, productService domain_product_core.ProductService) *OrderService {
 	return &OrderService{
-		orderDomainService: order.NewOrderDomainService(repo),
+		orderDomainService: orderDomainService,
+		productService:     productService,
 	}
 }
 
-// CreateOrder 创建订单
-func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []order.OrderItemDO) (string, error) {
-	// 计算总金额并验证订单项
-	var totalAmount int
-	for _, item := range items {
-		if item.ProductID == "" {
-			return "", errors.New("product ID cannot be empty")
-		}
-		if item.Quantity <= 0 {
-			return "", errors.New("quantity must be greater than zero")
-		}
-		if item.UnitPrice <= 0 {
-			return "", errors.New("unit price must be greater than zero")
-		}
-		calculatedSubtotal := item.Quantity * item.UnitPrice
-		if item.Subtotal != calculatedSubtotal {
-			return "", fmt.Errorf("subtotal mismatch for product %s: expected %d, got %d", item.ProductID, calculatedSubtotal, item.Subtotal)
-		}
-		totalAmount += item.Subtotal
+func (s *OrderService) CreateOrder(ctx context.Context, orderID string, items []*order.OrderItemDO) (string, error) {
+	// todo 假装这里只有一个商品
+	// todo 这块逻辑要重新封装处理
+	// 验证商品状态, 并获取商品信息
+	req := &domain_product_core.ValidateProductRequest{
+		ProductID: items[0].ProductID,
+		Name:      "",
+		Price:     items[0].UnitPrice,
+		Quantity:  items[0].Quantity,
+	}
+	resp, err := s.productService.ValidateProduct(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	if resp.IsValid == false {
+		return "", errors.New(resp.Messages)
+	}
+	if resp.Product.Status != domain_product_core.StatusValid {
+		return "", errors.New("product is not available")
 	}
 
-	// 创建订单聚合
+	p := resp.Product
+
+	// 创建订单
 	newOrder := &order.OrderDO{
-		ID:          uuid.New().String(),
-		CustomerID:  customerID,
-		Items:       items,
-		TotalAmount: totalAmount,
-		Status:      order.OrderStatusCreated,
+		ID:     orderID,
+		Status: order.OrderStatusCreated,
+		Items: []order.OrderItemDO{
+			{
+				ProductID: p.ID,
+				Quantity:  items[0].Quantity,
+				UnitPrice: items[0].UnitPrice,
+				Subtotal:  items[0].Subtotal,
+			},
+		},
+		TotalAmount: items[0].Subtotal,
 	}
 
-	// 委托给领域服务处理业务逻辑
+	// 委托领域服务处理业务逻辑
 	return newOrder.ID, s.orderDomainService.CreateOrder(ctx, newOrder)
 }
 
