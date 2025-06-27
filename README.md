@@ -122,3 +122,32 @@ order_ddd_example/
 └── README.md                    # 项目说明
 
 ```
+
+## 待考虑功能
+1. 状态机模式实现，  比如订单的每个状态，都应该有是否能支付、是否能取消等
+```go
+// 订单状态接口
+type OrderState interface {
+    CanPay() bool
+    CanCancel() bool
+    Pay() error
+    Cancel() error
+    String() string
+}
+
+// 状态工厂
+func NewOrderState(order *Order) OrderState {
+    switch order.status {
+    case StatusCreated:
+        return &CreatedState{order: order}
+    case StatusPendingPayment:
+        return &PendingPaymentState{order: order}
+    // 其他状态...
+    default:
+        return nil
+    }
+}
+```
+
+2. 领域事件支持，比如使用事件总线发布订单状态变更时间，支持异步处理(实现上下文间松耦合协作和支持异步处理，提高系统吞吐量)
+3. 幂等性(防止重复处理导致的数据不一致和结合数据库事务确保操作原子性)

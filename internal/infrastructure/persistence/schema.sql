@@ -35,11 +35,17 @@ CREATE TABLE IF NOT EXISTS t_order_items (
 -- 创建支付表
 -- 存储订单支付信息，通过order_id与订单主表关联
 CREATE TABLE IF NOT EXISTS t_payment (
-    id VARCHAR(36) PRIMARY KEY COMMENT '主键id',
+    id VARCHAR(36) PRIMARY KEY COMMENT '主键id: 后续使用雪花算法生成，使用整数',
     order_id VARCHAR(36) NOT NULL COMMENT '关联订单主表的ID',
     amount BIGINT NOT NULL COMMENT '支付金额，单位：分',
-    status ENUM('created', 'paid', 'refunded', 'failed', 'expired', 'canceled', 'refunding', 'refund_failed', 'refunded_success') NOT NULL COMMENT '支付状态',
+    currency CHAR(3) NOT NULL DEFAULT 'CNY' COMMENT '货币类型,如CNY/USD/EUR',
+    channel TINYINT UNSIGNED NOT NULL COMMENT '支付渠道(1:支付宝 2:微信 3:银行卡)',
+    --status ENUM('created', 'paid', 'refunded', 'failed', 'expired', 'canceled', 'refunding', 'refund_failed', 'refunded_success') NOT NULL COMMENT '支付状态',
+    status TINYINT UNSIGNED NOT NULL DEFAULT 0 COMMENT '支付状态(0:创建 1:已支付 2:退款中 3:退款成功 4:支付失败 5:已过期 6:退款ing 7:退款失败 8:退款成功)',
+    transaction_id VARCHAR(64) COMMENT '第三方交易流水号',
+    refund_transaction_id VARCHAR(64) COMMENT '第三方退款交易流水号',
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间,精确到毫秒',
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间，精确到毫秒',
-    INDEX idx_order_id (order_id)
+    INDEX idx_order_id (order_id),
+    INDEX idx_status_updated (status, updated_at)
 )ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='支付表';

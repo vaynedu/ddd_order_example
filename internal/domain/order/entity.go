@@ -18,7 +18,7 @@ type OrderDO struct {
 	CustomerID  string        `json:"customer_id" gorm:"column:customer_id"`
 	Items       []OrderItemDO `json:"items" gorm:"foreignKey:OrderID"`
 	Status      OrderStatus   `json:"status" gorm:"column:status"`
-	TotalAmount int64           `json:"total_amount" gorm:"column:total_amount"`
+	TotalAmount int64         `json:"total_amount" gorm:"column:total_amount"`
 	CreatedAt   time.Time     `json:"created_at" gorm:"column:created_at"`
 	UpdatedAt   time.Time     `json:"updated_at" gorm:"column:updated_at"`
 }
@@ -37,20 +37,21 @@ func (OrderItemDO) TableName() string {
 type OrderItemDO struct {
 	OrderID   string `json:"order_id" gorm:"column:order_id"`
 	ProductID string `json:"product_id" gorm:"column:product_id"`
-	Quantity  int64    `json:"quantity" gorm:"column:quantity"`
-	UnitPrice int64    `json:"unit_price" gorm:"column:unit_price"`
-	Subtotal  int64    `json:"subtotal" gorm:"column:subtotal"`
+	Quantity  int64  `json:"quantity" gorm:"column:quantity"`
+	UnitPrice int64  `json:"unit_price" gorm:"column:unit_price"`
+	Subtotal  int64  `json:"subtotal" gorm:"column:subtotal"`
 }
 
 // OrderStatus 订单状态
 type OrderStatus string
 
 const (
-	OrderStatusCreated   OrderStatus = "created"
-	OrderStatusPaid      OrderStatus = "paid"
-	OrderStatusShipped   OrderStatus = "shipped"
-	OrderStatusCompleted OrderStatus = "completed"
-	OrderStatusCancelled OrderStatus = "cancelled"
+	OrderStatusCreated        OrderStatus = "created"
+	OrderStatusPendingPayment OrderStatus = "pending_payment"
+	OrderStatusPaid           OrderStatus = "paid"
+	OrderStatusShipped        OrderStatus = "shipped"
+	OrderStatusCompleted      OrderStatus = "completed"
+	OrderStatusCancelled      OrderStatus = "cancelled"
 )
 
 // Validate 创建订单时的业务规则校验
@@ -80,7 +81,7 @@ func (o *OrderDO) Validate() error {
 		calculatedTotal += item.Subtotal
 	}
 
-	if o.TotalAmount != calculatedTotal{
+	if o.TotalAmount != calculatedTotal {
 		return errors.New("订单总金额与商品小计之和不匹配")
 	}
 
@@ -99,6 +100,35 @@ func (o *OrderDO) Cancel() error {
 	}
 
 	o.Status = OrderStatusCancelled
+	o.UpdatedAt = time.Now()
+	return nil
+}
+
+// 标记订单为待支付状态
+func (o *OrderDO) MarkAsPendingPayment() error {
+	// 状态验证：只能从CREATED状态转为PENDING_PAYMENT
+	if o.Status != OrderStatusCreated {
+		return errors.New("只有已创建的订单可以标记为待支付")
+	}
+
+	// 更新订单状态和支付ID
+	o.Status = OrderStatusPendingPayment
+	o.UpdatedAt = time.Now()
+
+	return nil
+}
+
+// MarkAsPaid 标记订单为待支付状态
+func (o *OrderDO) MarkAsPaid() error {
+	// 状态验证：只能从PENDING_PAYMENT状态转为PAID
+	if o.Status != OrderStatusPendingPayment {
+		return errors.New("只有待支付的订单可以标记为已支付")
+	}
+
+	// 验证是否有关联的支付ID
+	// 订单表没必要关联支付ID， 因为一个订单可能有多次支付
+
+	o.Status = OrderStatusPaid
 	o.UpdatedAt = time.Now()
 	return nil
 }

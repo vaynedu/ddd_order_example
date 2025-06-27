@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_product_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/order"
 )
@@ -11,6 +12,7 @@ import (
 type OrderService struct {
 	productService     domain_product_core.ProductService // 依赖商品领域接口
 	orderDomainService order.OrderDomainService           // 依赖订单领域服务
+	paymentService     *PaymentService                    // 注入依赖支付服务
 }
 
 func NewOrderService(orderDomainService order.OrderDomainService, productService domain_product_core.ProductService) *OrderService {
@@ -20,7 +22,8 @@ func NewOrderService(orderDomainService order.OrderDomainService, productService
 	}
 }
 
-func (s *OrderService) CreateOrder(ctx context.Context, orderID string, items []*order.OrderItemDO) (string, error) {
+func (s *OrderService) CreateOrder(ctx context.Context, customerID string, items []*order.OrderItemDO) (string, error) {
+	// todo 考虑分布式锁、业务幂等， 防止重复创建单子
 	// todo 假装这里只有一个商品
 	// todo 这块逻辑要重新封装处理
 	// 验证商品状态, 并获取商品信息
@@ -45,8 +48,9 @@ func (s *OrderService) CreateOrder(ctx context.Context, orderID string, items []
 
 	// 创建订单
 	newOrder := &order.OrderDO{
-		ID:     orderID,
-		Status: order.OrderStatusCreated,
+		ID:         uuid.New().String(),
+		CustomerID: customerID,
+		Status:     order.OrderStatusCreated,
 		Items: []order.OrderItemDO{
 			{
 				ProductID: p.ID,
@@ -81,4 +85,31 @@ func (s *OrderService) CancelOrder(ctx context.Context, orderID string) error {
 
 	// 持久化更新
 	return s.orderDomainService.UpdateOrder(ctx, order)
+}
+
+func (s *OrderService) PayOrder(ctx context.Context, orderID string) error {
+	// 1. 获取订单
+	orderDO, err := s.orderDomainService.GetOrderByID(ctx, orderID)
+	if err != nil {
+		return err
+	}
+
+	// 2. 业务规则检查：订单必须是已创建的状态
+	if orderDO.Status != order.OrderStatusCreated {
+		return errors.New("订单状态异常，无法支付")
+	}
+
+	// 3. 调用支付服务创建支付
+	_, err = s.paymentService.CreatePayment(ctx, orderDO.ID, orderDO.TotalAmount, "CNY", 1)
+	if err != nil {
+		return err
+	}
+
+	// 4. 更新订单状态
+	if err := orderDO.MarkAsPaid(); err != nil {
+		return err
+	}
+
+	// 5. 持久化订单变更
+	return s.orderDomainService.UpdateOrder(ctx, orderDO)
 }
