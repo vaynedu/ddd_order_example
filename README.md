@@ -77,26 +77,37 @@
 order_ddd_example/
 ├── cmd/
 │   └── server/
-│       └── main.go              # 应用入口点
 ├── internal/
 │   ├── domain/
-│   │   └── order/
+│   │   └── order/               # 订单上下文
 │   │       ├── entity.go        # 订单实体
 │   │       ├── repository.go    # 仓储接口
-│   │       └── service.go       # 领域服务
+│   │       └── service.go       # 订单领域服务
+│   │   └── payment/             # 支付上下文
+│   │       ├── entity.go        # 支付实体
+│   │       ├── repository.go    # 仓储接口
+│   │       └── service.go       # 支持领域服务
+│   │       └── event.go         # 支付领域事件（可选）
 │   ├── application/
 │   │   └── service/
-│   │       └── order_service.go # 应用服务
+│   │       └── order_service.go     # 订单应用服务       
+│   │       └── payment_service.go   # 支付应用服务
 │   ├── infrastructure/
 │   │   ├── repository/
-│   │   │   └── order_repository.go # 仓储实现
+│   │   │   └── order_repository.go # 订单仓储实现
 │   │   └── persistence/
-│   │       └── schema.sql       # 数据库模式
+│   │   │   └── schema.sql          # 数据库模式
+│   │   └── payment/                # 支付基础设施
+│   │       ├── payment_proxy.go    # 支付代理实现（与外部支付系统通信）
+│   │       ├── alipay_adapter.go   # 支付宝适配器
+│   │       └── wechatpay_adapter.go # 微信支付适配器
 │   └── interface/
 │       └── handler/
 │           └── order_handler.go # HTTP处理器
+│           └── payment_handler.go # HTTP处理器
 │       └── dto/
-│           └── order_dto.go     # 订单DTO
+│           └── order_dto.go      # 订单DTO
+│           └── payment_dto.go    # 支付DTO
 │       └── di/
 │           └── wire.go        // 依赖定义文件
 │           └── wire_gen.go    // 自动生成的依赖文件
@@ -106,6 +117,7 @@ order_ddd_example/
 ├── config/
 │   └── config.yaml              # 配置文件
 ├── .env.example                 # 环境变量示例
+├── main.go                      # 应用入口点
 ├── go.mod                       # Go模块文件
 └── README.md                    # 项目说明
 
