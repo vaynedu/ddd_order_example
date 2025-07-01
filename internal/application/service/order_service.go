@@ -9,6 +9,7 @@ import (
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_order_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_payment_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_product_core"
+	"gorm.io/gorm"
 )
 
 type OrderService struct {
@@ -150,5 +151,17 @@ func (s *OrderService) PayOrder(ctx context.Context, orderID string) error {
 		fmt.Println("支付链接或支付处理信息:", paymentID)
 	}
 
+	return nil
+}
+
+// UpdateOrder 更新订单
+func (s *OrderService) UpdateOrder(ctx context.Context, orderDO *domain_order_core.OrderDO) error {
+	if err := s.orderDomainService.UpdateOrder(ctx, orderDO); err != nil {
+		// 检查是否为乐观锁冲突错误 (处理乐观锁冲突（v2 特定写法）)
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return fmt.Errorf("订单已被其他操作更新，请刷新后重试: %w", err)
+		}
+		return fmt.Errorf("更新订单失败: %w", err)
+	}
 	return nil
 }

@@ -76,3 +76,38 @@ func NewOrderResponse(order *domain_order_core.OrderDO) *OrderResponse {
 		Items:       items,
 	}
 }
+
+// UpdateOrderRequest 更新订单请求DTO
+type UpdateOrderRequest struct {
+	OrderID    string                   `json:"order_id"`
+	CustomerID string                   `json:"customer_id"`
+	Status     string                   `json:"status"`
+	Items      []UpdateOrderItemRequest `json:"items,omitempty"`
+}
+
+type UpdateOrderItemRequest struct {
+	ProductID string  `json:"product_id"`
+	Quantity  int64   `json:"quantity"`
+	UnitPrice float64 `json:"unit_price"` // 元
+	Subtotal  float64 `json:"subtotal"`   // 元
+}
+
+// ToDomain 将更新订单请求DTO转换为领域模型
+func (req *UpdateOrderRequest) ToDomain() *domain_order_core.OrderDO {
+	orderItems := make([]domain_order_core.OrderItemDO, 0, len(req.Items))
+	for _, item := range req.Items {
+		orderItems = append(orderItems, domain_order_core.OrderItemDO{
+			ProductID: item.ProductID,
+			Quantity:  item.Quantity,
+			UnitPrice: int64(dmoney.ConvertFloat64ToCent(item.UnitPrice)),
+			Subtotal:  int64(dmoney.ConvertFloat64ToCent(item.Subtotal)),
+		})
+	}
+
+	return &domain_order_core.OrderDO{
+		ID:         req.OrderID,
+		Status:     domain_order_core.OrderStatus(req.Status),
+		Items:      orderItems,
+		CustomerID: req.CustomerID,
+	}
+}

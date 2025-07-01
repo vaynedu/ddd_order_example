@@ -68,6 +68,7 @@ func main() {
 	mux.HandleFunc("/api/orders/create", orderHandler.CreateOrder)
 	mux.HandleFunc("/api/orders/list", orderHandler.GetOrder)
 	mux.HandleFunc("/api/orders/pay", orderHandler.PayOrder)
+	mux.HandleFunc("/api/orders/update", orderHandler.UpdateOrder)
 
 	// 创建HTTP服务器
 	server := &http.Server{

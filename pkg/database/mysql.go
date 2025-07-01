@@ -28,7 +28,6 @@ func InitMySQL(ctx context.Context, dsn string) (*gorm.DB, error) {
 	// if err != nil {
 	// 	return nil, err
 	// }
-    
 
 	return db, nil
 }

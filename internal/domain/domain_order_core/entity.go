@@ -3,6 +3,8 @@ package domain_order_core
 import (
 	"errors"
 	"time"
+
+	"gorm.io/plugin/optimisticlock"
 )
 
 // OrderDO 订单聚合根
@@ -21,6 +23,8 @@ type OrderDO struct {
 	TotalAmount int64         `json:"total_amount" gorm:"column:total_amount"`
 	CreatedAt   time.Time     `json:"created_at" gorm:"column:created_at"`
 	UpdatedAt   time.Time     `json:"updated_at" gorm:"column:updated_at"`
+	// Version     int64         `json:"version" gorm:"column:version;optimistic_lock"` // 乐观锁版本号
+	Version optimisticlock.Version `json:"version" gorm:"column:version;optimistic_lock"` // 乐观锁版本号
 }
 
 // OrderItemDOs 订单项集合
@@ -108,6 +112,36 @@ func (o *OrderDO) Validate() error {
 	return nil
 }
 
+// ValidateUpdate 更新订单
+func (o *OrderDO) ValidateUpdate() error {
+	if o.ID == "" {
+		return errors.New("订单ID不能为空")
+	}
+
+	var calculatedTotal int64
+	for _, item := range o.Items {
+		if item.ProductID == "" {
+			return errors.New("商品ID不能为空")
+		}
+
+		if item.Quantity <= 0 {
+			return errors.New("商品数量必须大于0")
+		}
+
+		if item.UnitPrice < 0 {
+			return errors.New("商品单价不能为负数")
+		}
+
+		calculatedTotal += item.Subtotal
+	}
+
+	if o.TotalAmount != calculatedTotal {
+		return errors.New("订单总金额与商品小计之和不匹配")
+	}
+
+	return nil
+}
+
 // CanBeCancelled 检查订单是否可以被取消
 func (o *OrderDO) CanBeCancelled() bool {
 	return o.Status == OrderStatusCreated || o.Status == OrderStatusPaid
@@ -150,5 +184,16 @@ func (o *OrderDO) MarkAsPaid() error {
 
 	o.Status = OrderStatusPaid
 	o.UpdatedAt = time.Now()
+	return nil
+}
+
+// CalculateTotalAmount 计算订单总金额
+func (o *OrderDO) CalculateTotalAmount() error {
+	var totalAmount int64
+	for _, item := range o.Items {
+		totalAmount += item.Subtotal
+	}
+
+	o.TotalAmount = totalAmount
 	return nil
 }

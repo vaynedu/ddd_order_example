@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS t_order (
     total_amount BIGINT(20) NOT NULL COMMENT '订单总金额，单位：分',
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间,精确到毫秒',
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间，精确到毫秒',
+    version BIGINT(20) NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
     INDEX idx_customer_id (customer_id),
     INDEX idx_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单表';
