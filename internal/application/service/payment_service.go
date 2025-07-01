@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_payment_core"
 	"github.com/vaynedu/ddd_order_example/internal/infrastructure/payment"
+	"gorm.io/gorm"
 )
 
 type PaymentService struct {
@@ -37,4 +40,18 @@ func (s *PaymentService) CreatePayment(ctx context.Context, orderID string, amou
 
 	// 3. 更新支付记录
 	return paymentDO.ID, s.domainService.ProcessPaymentResult(ctx, paymentDO.ID, transactionID, true)
+}
+
+// GetPaymentByOrderID 根据订单ID查询支付单
+func (s *PaymentService) GetPaymentByOrderID(ctx context.Context, orderID string) (*domain_payment_core.PaymentDO, error) {
+	paymentDO, err := s.domainService.GetPaymentByOrderID(ctx, orderID)
+	if err != nil {
+		// 这一层将错误转化
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain_payment_core.ErrPaymentNotFound
+		}
+
+		return nil, fmt.Errorf("查询支付单失败: %w", err)
+	}
+	return paymentDO, nil
 }

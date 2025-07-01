@@ -75,3 +75,34 @@ func (h *OrderHandler) GetOrder(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
 }
+
+// PayOrder 处理订单支付请求
+func (h *OrderHandler) PayOrder(w http.ResponseWriter, r *http.Request) {
+	// 1. 解析请求体获取订单ID
+	var req struct {
+		OrderID string `json:"order_id"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "无效的请求格式: " + err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.OrderID == "" {
+		http.Error(w, "订单ID不能为空", http.StatusBadRequest)
+		return
+	}
+
+	// 2. 调用应用服务执行支付
+	if err := h.orderService.PayOrder(r.Context(), req.OrderID); err != nil {
+		http.Error(w, "支付失败: " + err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// 3. 返回成功响应
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "支付成功",
+	})
+}

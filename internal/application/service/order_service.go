@@ -3,9 +3,11 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_order_core"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_payment_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_product_core"
 )
 
@@ -88,6 +90,7 @@ func (s *OrderService) CancelOrder(ctx context.Context, orderID string) error {
 	return s.orderDomainService.UpdateOrder(ctx, order)
 }
 
+// PayOrder 支付订单
 func (s *OrderService) PayOrder(ctx context.Context, orderID string) error {
 	// 1. 获取订单
 	orderDO, err := s.orderDomainService.GetOrderByID(ctx, orderID)
@@ -97,20 +100,55 @@ func (s *OrderService) PayOrder(ctx context.Context, orderID string) error {
 
 	// 2. 业务规则检查：订单必须是已创建的状态
 	if orderDO.Status != domain_order_core.OrderStatusCreated {
-		return errors.New("订单状态异常，无法支付")
+		return fmt.Errorf("订单状态异常，当前状态: %s,无法发起支付", domain_order_core.GetOrderStatusDetail(orderDO.Status))
 	}
 
-	// 3. 调用支付服务创建支付
-	_, err = s.paymentService.CreatePayment(ctx, orderDO.ID, orderDO.TotalAmount, "CNY", 1)
+	// 3. 检查是否已存在支付单
+	existingPayment, err := s.paymentService.GetPaymentByOrderID(ctx, orderDO.ID)
 	if err != nil {
-		return err
+		// 仅当支付单不存在时才返回错误，其他错误正常返回
+		if !errors.Is(err, domain_payment_core.ErrPaymentNotFound) {
+			return err
+		}
 	}
 
-	// 4. 更新订单状态
-	if err := orderDO.MarkAsPaid(); err != nil {
-		return err
+	// 4. 处理支付单
+	var paymentID string
+	if existingPayment != nil {
+		switch existingPayment.Status {
+		case domain_payment_core.PaymentStatusPaid:
+			return errors.New("订单已支付，无需重复操作")
+		case domain_payment_core.PaymentStatusPending, domain_payment_core.PaymentStatusCreated:
+			paymentID = existingPayment.ID
+		default:
+			return fmt.Errorf("支付单状态异常: %s", domain_payment_core.GetPaymentStatusDetail(existingPayment.Status))
+		}
+	} else {
+		// 创建新支付单
+		newPaymentID, err := s.paymentService.CreatePayment(ctx, orderDO.ID, orderDO.TotalAmount, "CNY", 1)
+		if err != nil {
+			return fmt.Errorf("创建支付单失败: %w", err)
+		}
+		paymentID = newPaymentID
 	}
 
-	// 5. 持久化订单变更
-	return s.orderDomainService.UpdateOrder(ctx, orderDO)
+	// 5. 更新订单状态为待支付
+	if err := orderDO.MarkAsPendingPayment(); err != nil {
+		return fmt.Errorf("更新订单为待支付状态失败: %w", err)
+	}
+
+	// 6. 持久化订单状态变更
+	if err := s.orderDomainService.UpdateOrder(ctx, orderDO); err != nil {
+		return fmt.Errorf("保存订单状态失败: %w", err)
+	}
+
+	// 7. 这里应该调用支付网关获取支付链接或发起支付处理
+	// 实际项目中这里会有支付网关的交互逻辑
+
+	if paymentID != "" {
+		// 这里占位， 打印下paymentID， 这里还是重新修改
+		fmt.Println("支付链接或支付处理信息:", paymentID)
+	}
+
+	return nil
 }

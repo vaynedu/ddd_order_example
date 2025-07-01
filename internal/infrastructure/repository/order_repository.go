@@ -29,7 +29,7 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *domain_order_core.Or
 	defer tx.Rollback()
 
 	// 使用GORM保存订单主表
-	if err := tx.Table("t_order").Create(o).Error; err != nil {
+	if err := tx.Table("t_order").Save(o).Error; err != nil {
 		return err
 	}
 
@@ -67,7 +67,7 @@ func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*domain
 	var o domain_order_core.OrderDO
 	if err := r.db.WithContext(ctx).Table("t_order").First(&o, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("订单不存在")
+			return nil, errors.New("订单不存在") // 针对错误码重构
 		}
 		return nil, err
 	}

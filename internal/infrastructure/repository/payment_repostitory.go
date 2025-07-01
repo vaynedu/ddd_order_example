@@ -19,7 +19,7 @@ func NewPaymentRepository(db *gorm.DB) domain_payment_core.Repository {
 
 // Save 保存支付记录
 func (r *PaymentRepositoryMySQL) Save(ctx context.Context, payment *domain_payment_core.PaymentDO) error {
-	return r.db.WithContext(ctx).Table("t_payment").Create(payment).Error
+	return r.db.WithContext(ctx).Table("t_payment").Save(payment).Error
 }
 
 // FindByID 根据ID查询支付记录

@@ -18,6 +18,7 @@ func NewPaymentDomainService(repo Repository) *PaymentDomainService {
 // CreatePayment 创建支付
 func (s *PaymentDomainService) CreatePayment(ctx context.Context, orderID string, amount int64, currency string, channel int) (*PaymentDO, error) {
 	paymentDO := &PaymentDO{
+		ID:        orderID,
 		OrderID:   orderID,
 		Amount:    amount,
 		Currency:  currency,
@@ -46,4 +47,9 @@ func (s *PaymentDomainService) ProcessPaymentResult(ctx context.Context, payment
 	}
 
 	return s.repo.Save(ctx, payment)
+}
+
+
+func (s *PaymentDomainService) GetPaymentByOrderID(ctx context.Context, orderID string) (*PaymentDO, error) {
+	return s.repo.FindByOrderID(ctx, orderID)
 }

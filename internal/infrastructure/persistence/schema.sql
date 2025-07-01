@@ -12,7 +12,7 @@ drop table t_payment;
 CREATE TABLE IF NOT EXISTS t_order (
     id VARCHAR(36) PRIMARY KEY COMMENT '主键id',
     customer_id VARCHAR(36) NOT NULL COMMENT '客户id, todo感觉可以作为标识id',
-    status ENUM('created', 'paid', 'shipped', 'completed', 'cancelled') NOT NULL COMMENT '订单状态',
+    status ENUM('unknown','created','pending', 'paid', 'shipped', 'completed', 'cancelled') NOT NULL COMMENT '订单状态',
     total_amount BIGINT(20) NOT NULL COMMENT '订单总金额，单位：分',
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间,精确到毫秒',
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间，精确到毫秒',
@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS t_payment (
     refund_transaction_id VARCHAR(64) COMMENT '第三方退款交易流水号',
     created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间,精确到毫秒',
     updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间，精确到毫秒',
+    completed_at TIMESTAMP(3) NULL COMMENT '支付完成时间,精确到毫秒',
     INDEX idx_order_id (order_id),
     INDEX idx_status_updated (status, updated_at)
 )ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT='支付表';

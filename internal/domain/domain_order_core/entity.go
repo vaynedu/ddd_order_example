@@ -46,20 +46,20 @@ type OrderItemDO struct {
 type OrderStatus string
 
 const (
-	OrderStatusUnknown        OrderStatus = "unknown"
-	OrderStatusCreated        OrderStatus = "created"
-	OrderStatusPendingPayment OrderStatus = "pending_payment"
-	OrderStatusPaid           OrderStatus = "paid"
-	OrderStatusShipped        OrderStatus = "shipped"
-	OrderStatusCompleted      OrderStatus = "completed"
-	OrderStatusCancelled      OrderStatus = "cancelled"
+	OrderStatusUnknown   OrderStatus = "unknown"
+	OrderStatusCreated   OrderStatus = "created"
+	OrderStatusPending   OrderStatus = "pending"
+	OrderStatusPaid      OrderStatus = "paid"
+	OrderStatusShipped   OrderStatus = "shipped"
+	OrderStatusCompleted OrderStatus = "completed"
+	OrderStatusCancelled OrderStatus = "cancelled"
 )
 
 func GetOrderStatusDetail(status OrderStatus) string {
 	switch status {
 	case OrderStatusCreated:
 		return "已创建"
-	case OrderStatusPendingPayment:
+	case OrderStatusPending:
 		return "待支付"
 	case OrderStatusPaid:
 		return "已支付"
@@ -132,7 +132,7 @@ func (o *OrderDO) MarkAsPendingPayment() error {
 	}
 
 	// 更新订单状态和支付ID
-	o.Status = OrderStatusPendingPayment
+	o.Status = OrderStatusPending
 	o.UpdatedAt = time.Now()
 
 	return nil
@@ -141,7 +141,7 @@ func (o *OrderDO) MarkAsPendingPayment() error {
 // MarkAsPaid 标记订单为待支付状态
 func (o *OrderDO) MarkAsPaid() error {
 	// 状态验证：只能从PENDING_PAYMENT状态转为PAID
-	if o.Status != OrderStatusPendingPayment {
+	if o.Status != OrderStatusPending {
 		return errors.New("只有待支付的订单可以标记为已支付")
 	}
 
