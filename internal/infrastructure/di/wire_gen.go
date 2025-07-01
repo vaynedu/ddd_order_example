@@ -8,9 +8,11 @@ package di
 
 import (
 	"github.com/vaynedu/ddd_order_example/internal/application/service"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_order_core"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_payment_core"
 	"github.com/vaynedu/ddd_order_example/internal/domain/domain_product_core"
-	"github.com/vaynedu/ddd_order_example/internal/domain/order"
 	"github.com/vaynedu/ddd_order_example/internal/infrastructure/external/mocks"
+	"github.com/vaynedu/ddd_order_example/internal/infrastructure/payment"
 	"github.com/vaynedu/ddd_order_example/internal/infrastructure/repository"
 	"github.com/vaynedu/ddd_order_example/internal/interface/handler"
 	"gorm.io/gorm"
@@ -20,10 +22,14 @@ import (
 
 // 测试环境依赖注入 - 使用Mock商品服务
 func InitializeTestOrderHandler(db *gorm.DB) (*handler.OrderHandler, error) {
+	productService := NewMockProductService()
 	orderRepository := NewOrderRepository(db)
 	orderDomainService := NewOrderDomainService(orderRepository)
-	productService := NewMockProductService()
-	orderService := NewOrderService(orderDomainService, productService)
+	repository := NewPaymentRepository(db)
+	paymentDomainService := NewPaymentDomainService(repository)
+	paymentProxy := NewMockPaymentProxy()
+	paymentService := NewPaymentService(paymentDomainService, paymentProxy)
+	orderService := NewOrderService(productService, orderDomainService, paymentService)
 	orderHandler := NewOrderHandler(orderService)
 	return orderHandler, nil
 }
@@ -31,19 +37,13 @@ func InitializeTestOrderHandler(db *gorm.DB) (*handler.OrderHandler, error) {
 // wire.go:
 
 // NewOrderRepository - 初始化仓储
-func NewOrderRepository(db *gorm.DB) order.OrderRepository {
+func NewOrderRepository(db *gorm.DB) domain_order_core.OrderRepository {
 	return repository.NewOrderRepository(db)
 }
 
 // NewOrderDomainService - 初始化领域服务
-func NewOrderDomainService(repo order.OrderRepository) order.OrderDomainService {
-	return order.NewOrderDomainService(repo)
-}
-
-// NewOrderService 初始化应用服务
-// 传入实例化的order，传入实例化的productService
-func NewOrderService(domainService order.OrderDomainService, productService domain_product_core.ProductService) *service.OrderService {
-	return service.NewOrderService(domainService, productService)
+func NewOrderDomainService(repo domain_order_core.OrderRepository) domain_order_core.OrderDomainService {
+	return domain_order_core.NewOrderDomainService(repo)
 }
 
 // NewOrderHandler 初始化处理器
@@ -54,4 +54,33 @@ func NewOrderHandler(orderService *service.OrderService) *handler.OrderHandler {
 // NewMockProductService 创建商品服务的Mock实现
 func NewMockProductService() domain_product_core.ProductService {
 	return mocks.NewMockProductService()
+}
+
+// NewPaymentRepository 创建支付仓储
+func NewPaymentRepository(db *gorm.DB) domain_payment_core.Repository {
+	return repository.NewPaymentRepository(db)
+}
+
+// NewPaymentDomainService 创建支付领域服务
+func NewPaymentDomainService(repo domain_payment_core.Repository) *domain_payment_core.PaymentDomainService {
+	return domain_payment_core.NewPaymentDomainService(repo)
+}
+
+// NewMockPaymentProxy 创建Mock支付代理
+func NewMockPaymentProxy() payment.PaymentProxy {
+	return payment.NewMockPaymentProxy()
+}
+
+// NewPaymentService 创建支付应用服务
+func NewPaymentService(domainService *domain_payment_core.PaymentDomainService, proxy payment.PaymentProxy) *service.PaymentService {
+	return service.NewPaymentService(domainService, proxy)
+}
+
+// NewOrderService 创建订单应用服务, 包含订单领域服务, 支付应用服务, 商品服务
+func NewOrderService(
+	productService domain_product_core.ProductService,
+	orderDomainService domain_order_core.OrderDomainService,
+	paymentService *service.PaymentService,
+) *service.OrderService {
+	return service.NewOrderService(orderDomainService, paymentService, productService)
 }

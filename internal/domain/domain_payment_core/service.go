@@ -9,6 +9,12 @@ type PaymentDomainService struct {
 	repo Repository
 }
 
+func NewPaymentDomainService(repo Repository) *PaymentDomainService {
+	return &PaymentDomainService{
+		repo: repo,
+	}
+}
+
 // CreatePayment 创建支付
 func (s *PaymentDomainService) CreatePayment(ctx context.Context, orderID string, amount int64, currency string, channel int) (*PaymentDO, error) {
 	paymentDO := &PaymentDO{

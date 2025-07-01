@@ -24,7 +24,8 @@ type PaymentDO struct {
 type PaymentStatus int
 
 const (
-	PaymentStatusCreated         PaymentStatus = iota // 已创建
+	PaymentStatusUnknown         PaymentStatus = iota // 未知
+	PaymentStatusCreated                              // 已创建
 	PaymentStatusPaid                                 // 已支付
 	PaymentStatusRefunded                             // 已退款
 	PaymentStatusFailed                               // 支付失败
@@ -36,6 +37,17 @@ const (
 	PaymentStatusCompleted                            // 已完成
 	PaymentStatusClosed                               // 已关闭
 	PaymentStatusPending                              // 待支付
+)
+
+// 支付渠道枚举
+type PaymentChannel int
+
+const (
+	PaymentChannelAlipay   PaymentChannel = iota // 支付宝
+	PaymentChannelWechat                         // 微信
+	PaymentChannelUnionPay                       // 银联
+	PaymentChannelApplePay                       // ApplePay
+	PaymentChannelJDPay                          // 京东支付
 )
 
 // 支付仓储接口

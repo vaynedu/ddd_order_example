@@ -21,18 +21,18 @@ func NewOrderHandler(service *service.OrderService) *OrderHandler {
 // CreateOrder 创建订单的HTTP处理函数
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	// 1. 解析请求体
-	var request dto.CreateOrderRequest
+	var req dto.CreateOrderRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "无效的请求格式: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// 2. 转换为领域模型（通过DTO）
-	items := request.ToDomain()
+	items := req.ToDomain()
 
 	// 3. 调用应用服务
-	orderID, err := h.orderService.CreateOrder(r.Context(), request.CustomerID, items)
+	orderID, err := h.orderService.CreateOrder(r.Context(), req.CustomerID, items)
 	if err != nil {
 		http.Error(w, "创建订单失败: "+err.Error(), http.StatusUnprocessableEntity)
 		return

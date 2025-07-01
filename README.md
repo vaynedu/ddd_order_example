@@ -19,9 +19,12 @@
 
 - 语言：Go 1.23
 - 数据库：MySQL
-- Web框架：标准库net/http
+- Web框架：标准库net/http， 后续替换成hollow框架（封装gin）
 - 配置管理：viper
 - ORM：gorm
+- 日志：zap
+- 测试：mockgen
+- 缓存：redis
 
 ## 运行步骤
 
@@ -152,4 +155,4 @@ func NewOrderState(order *Order) OrderState {
 2. 领域事件支持，比如使用事件总线发布订单状态变更时间，支持异步处理(实现上下文间松耦合协作和支持异步处理，提高系统吞吐量)
 3. 幂等性(防止重复处理导致的数据不一致和结合数据库事务确保操作原子性)
 4. 考虑本地事务、消息队列、分布式事务try confirm cancel
-
+5. 使用mockgen自动生成测试用列

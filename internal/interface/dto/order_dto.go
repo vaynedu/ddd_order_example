@@ -3,7 +3,7 @@ package dto
 import (
 	"time"
 
-	"github.com/vaynedu/ddd_order_example/internal/domain/order"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_order_core"
 	"github.com/vaynedu/ddd_order_example/pkg/dmoney"
 )
 
@@ -22,10 +22,10 @@ type OrderItemRequest struct {
 }
 
 // ToDomain 将DTO转换为领域模型
-func (r *CreateOrderRequest) ToDomain() []*order.OrderItemDO {
-	var items []*order.OrderItemDO
+func (r *CreateOrderRequest) ToDomain() []*domain_order_core.OrderItemDO {
+	var items []*domain_order_core.OrderItemDO
 	for _, item := range r.Items {
-		items = append(items, &order.OrderItemDO{
+		items = append(items, &domain_order_core.OrderItemDO{
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 			UnitPrice: int64(dmoney.ConvertFloat64ToCent(item.UnitPrice)),
@@ -55,7 +55,7 @@ type OrderItemResponse struct {
 }
 
 // NewOrderResponse 从领域模型创建响应DTO
-func NewOrderResponse(order *order.OrderDO) *OrderResponse {
+func NewOrderResponse(order *domain_order_core.OrderDO) *OrderResponse {
 	items := make([]OrderItemResponse, len(order.Items))
 	for i, item := range order.Items {
 		items[i] = OrderItemResponse{

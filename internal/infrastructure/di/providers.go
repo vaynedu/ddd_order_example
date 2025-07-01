@@ -19,4 +19,3 @@ func NewProductAPIClient() *product_api.ThirdPartyProductAPI {
 func NewProductService(client *product_api.ThirdPartyProductAPI) domain_product_core.ProductService {
 	return product_api.NewProductServiceAdapter(client)
 }
-

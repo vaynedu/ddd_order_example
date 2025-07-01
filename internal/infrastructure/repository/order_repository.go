@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/vaynedu/ddd_order_example/internal/domain/order"
+	"github.com/vaynedu/ddd_order_example/internal/domain/domain_order_core"
 	"gorm.io/gorm"
 )
 
@@ -14,12 +14,12 @@ type OrderRepositoryMySQL struct {
 }
 
 // NewOrderRepository 创建订单仓储实例
-func NewOrderRepository(db *gorm.DB) order.OrderRepository {
+func NewOrderRepository(db *gorm.DB) domain_order_core.OrderRepository {
 	return &OrderRepositoryMySQL{db: db}
 }
 
 // Save 保存订单
-func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error {
+func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *domain_order_core.OrderDO) error {
 	// 开始事务
 	tx := r.db.Begin()
 	tx = tx.WithContext(ctx)
@@ -34,14 +34,14 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error
 	}
 
 	// 删除原有订单项
-	if err := tx.Table("t_order_items").Where("order_id = ?", o.ID).Delete(&order.OrderItemDO{}).Error; err != nil {
+	if err := tx.Table("t_order_items").Where("order_id = ?", o.ID).Delete(&domain_order_core.OrderItemDO{}).Error; err != nil {
 		return err
 	}
 
 	// 批量插入新订单项
-	orderItems := make([]order.OrderItemDO, len(o.Items))
+	orderItems := make([]domain_order_core.OrderItemDO, len(o.Items))
 	for i, item := range o.Items {
-		orderItems[i] = order.OrderItemDO{
+		orderItems[i] = domain_order_core.OrderItemDO{
 			OrderID:   o.ID,
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
@@ -62,9 +62,9 @@ func (r *OrderRepositoryMySQL) Save(ctx context.Context, o *order.OrderDO) error
 }
 
 // FindByID 根据ID查找订单
-func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.OrderDO, error) {
+func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*domain_order_core.OrderDO, error) {
 	// 查询订单主表
-	var o order.OrderDO
+	var o domain_order_core.OrderDO
 	if err := r.db.WithContext(ctx).Table("t_order").First(&o, "id = ?", id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("订单不存在")
@@ -79,8 +79,8 @@ func (r *OrderRepositoryMySQL) FindByID(ctx context.Context, id string) (*order.
         WHERE order_id = ?
     `
 
-	var items []order.OrderItemDO
-	if err := r.db.WithContext(ctx).Table(order.OrderItemDO{}.TableName()).Raw(query, id).Scan(&items).Error; err != nil {
+	var items []domain_order_core.OrderItemDO
+	if err := r.db.WithContext(ctx).Table(domain_order_core.OrderItemDO{}.TableName()).Raw(query, id).Scan(&items).Error; err != nil {
 		return nil, err
 	}
 
