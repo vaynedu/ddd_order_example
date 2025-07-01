@@ -39,6 +39,37 @@ const (
 	PaymentStatusPending                              // 待支付
 )
 
+func GetPaymentStatusDetail(status PaymentStatus) string {
+	switch status {
+	case PaymentStatusCreated:
+		return "已创建"
+	case PaymentStatusPaid:
+		return "已支付"
+	case PaymentStatusRefunded:
+		return "已退款"
+	case PaymentStatusFailed:
+		return "支付失败"
+	case PaymentStatusExpired:
+		return "已过期"
+	case PaymentStatusCanceled:
+		return "已取消"
+	case PaymentStatusRefunding:
+		return "退款中"
+	case PaymentStatusRefundFailed:
+		return "退款失败"
+	case PaymentStatusRefundedSuccess:
+		return "退款成功"
+	case PaymentStatusCompleted:
+		return "已完成"
+	case PaymentStatusClosed:
+		return "已关闭"
+	case PaymentStatusPending:
+		return "待支付"
+	default:
+		return "未知"
+	}
+}
+
 // 支付渠道枚举
 type PaymentChannel int
 
@@ -49,6 +80,23 @@ const (
 	PaymentChannelApplePay                       // ApplePay
 	PaymentChannelJDPay                          // 京东支付
 )
+
+func GetPaymentChannelDetail(channel PaymentChannel) string {
+	switch channel {
+	case PaymentChannelAlipay:
+		return "支付宝"
+	case PaymentChannelWechat:
+		return "微信"
+	case PaymentChannelUnionPay:
+		return "银联"
+	case PaymentChannelApplePay:
+		return "ApplePay"
+	case PaymentChannelJDPay:
+		return "京东支付"
+	default:
+		return "未知"
+	}
+}
 
 // 支付仓储接口
 type Repository interface {

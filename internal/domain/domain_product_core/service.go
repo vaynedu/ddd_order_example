@@ -21,6 +21,21 @@ const (
 	StatusOutOfStock                      // 售罄
 )
 
+func GetProductStatusDetail(status ProductStatus) string {
+	switch status {
+	case StatusValid:
+		return "有效"
+	case StatusInvalid:
+		return "无效"
+	case StatusDeleted:
+		return "已删除"
+	case StatusOutOfStock:
+		return "售罄"
+	default:
+		return "未知"
+	}
+}
+
 // ValidateProductRequest 商品验证请求参数
 type ValidateProductRequest struct {
 	ProductID string

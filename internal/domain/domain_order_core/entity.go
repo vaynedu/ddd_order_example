@@ -46,6 +46,7 @@ type OrderItemDO struct {
 type OrderStatus string
 
 const (
+	OrderStatusUnknown        OrderStatus = "unknown"
 	OrderStatusCreated        OrderStatus = "created"
 	OrderStatusPendingPayment OrderStatus = "pending_payment"
 	OrderStatusPaid           OrderStatus = "paid"
@@ -53,6 +54,25 @@ const (
 	OrderStatusCompleted      OrderStatus = "completed"
 	OrderStatusCancelled      OrderStatus = "cancelled"
 )
+
+func GetOrderStatusDetail(status OrderStatus) string {
+	switch status {
+	case OrderStatusCreated:
+		return "已创建"
+	case OrderStatusPendingPayment:
+		return "待支付"
+	case OrderStatusPaid:
+		return "已支付"
+	case OrderStatusShipped:
+		return "已发货"
+	case OrderStatusCompleted:
+		return "已完成"
+	case OrderStatusCancelled:
+		return "已取消"
+	default:
+		return "未知"
+	}
+}
 
 // Validate 创建订单时的业务规则校验
 func (o *OrderDO) Validate() error {
