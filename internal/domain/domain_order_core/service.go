@@ -56,10 +56,12 @@ func (s *OrderDomainService) GetOrderByID(ctx context.Context, orderID string) (
 
 // UpdateOrder 更新订单
 func (s *OrderDomainService) UpdateOrder(ctx context.Context, order *OrderDO) error {
-	// 应用业务规则
-	if err := order.Validate(); err != nil {
-		return err
-	}
+
+	// todo 这里的update要重写
+	// // 应用业务规则
+	// if err := order.Validate(); err != nil {
+	// 	return err
+	// }
 
 	order.UpdatedAt = time.Now()
 

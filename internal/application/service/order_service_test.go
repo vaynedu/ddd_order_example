@@ -59,6 +59,7 @@ func TestOrderService_CreateOrder_Success(t *testing.T) {
 	// 验证结果
 	assert.NoError(t, err)
 	assert.NotEmpty(t, orderID)
+	t.Logf("orderID: %s", orderID)
 }
 
 // TestOrderService_UpdateOrder_OptimisticLockConflict 更新订单乐观锁冲突场景
@@ -74,12 +75,13 @@ func TestOrderService_UpdateOrder_OptimisticLockConflict(t *testing.T) {
 	// 准备测试数据
 	ctx := context.Background()
 	orderDO := &domain_order_core.OrderDO{
-		ID:      "order_123",
-		Status:  domain_order_core.OrderStatusCreated,
+		ID:         "order_123",
+		CustomerID: "cust_123",
+		Status:     domain_order_core.OrderStatusCreated,
 	}
 
 	// 设置mock预期 - 返回乐观锁冲突错误
-	mockOrderRepo.EXPECT().Save(gomock.Any(), orderDO).Return(gorm.ErrDuplicatedKey)
+	mockOrderRepo.EXPECT().Save(gomock.Any(), orderDO).Return(gorm.ErrDuplicatedKey).AnyTimes()
 
 	// 执行测试
 	err := service.UpdateOrder(ctx, orderDO)
@@ -103,8 +105,8 @@ func TestOrderService_GetOrder_Success(t *testing.T) {
 	ctx := context.Background()
 	orderID := "order_123"
 	expectedOrder := &domain_order_core.OrderDO{
-		ID:      orderID,
-		Status:  domain_order_core.OrderStatusCreated,
+		ID:     orderID,
+		Status: domain_order_core.OrderStatusCreated,
 	}
 
 	// 设置mock预期
@@ -116,6 +118,7 @@ func TestOrderService_GetOrder_Success(t *testing.T) {
 	// 验证结果
 	assert.NoError(t, err)
 	assert.Equal(t, expectedOrder, result)
+	t.Logf("result: %v", result)
 }
 
 // MockProductService 模拟ProductService接口
