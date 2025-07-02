@@ -22,7 +22,7 @@ func NewPaymentService(domainService *domain_payment_core.PaymentDomainService, 
 	}
 }
 
-// 创建支付请求
+// 创建支付请求 
 func (s *PaymentService) CreatePayment(ctx context.Context, orderID string, amount int64, currency string, channel int) (string, error) {
 	// 1. 创建支付记录
 	paymentDO, err := s.domainService.CreatePayment(ctx, orderID, amount, currency, channel)

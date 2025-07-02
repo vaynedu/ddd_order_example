@@ -18,3 +18,11 @@ run: build
 clean:
 	rm -f $(BINARY_NAME)
 	rm -f $(WIRE_DIR)/wire_gen.go
+
+generate-mocks:
+	@echo "generate mocks file
+	mockgen -source=internal/domain/domain_order_core/repository.go -destination=internal/infrastructure/mocks/order_repository_mock.go -package=mocks
+	mockgen -source=internal/domain/domain_product_core/service.go -destination=internal/infrastructure/mocks/product_service_mock.go -package=mocks 
+	mockgen -source=internal/domain/domain_payment_core/repository.go -destination=internal/infrastructure/mocks/payment_repository_mock.go -package=mocks
+	mockgen -source=internal/domain/domain_product_core/service.go -destination=internal/infrastructure/mocks/product_service_mock.go -package=mocks
+	mockgen -source=internal/infrastructure/payment/payment_proxy.go -destination=internal/infrastructure/mocks/payment_proxy_mock.go -package=mocks
